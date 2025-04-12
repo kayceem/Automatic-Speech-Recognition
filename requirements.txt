@@ -9,7 +9,9 @@ pydub
 soundfile
 scikit-learn
 pandas
-numpy==1.26.4 	# Needs numpy<2.0.0 for ASR CTCDecoder dependency 
+matplotlib
+# Needs numpy<2.0.0 for ASR CTCDecoder dependency 
+numpy==1.26.4 	
 comet-ml
 # sox
 flask

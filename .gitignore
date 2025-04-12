@@ -188,3 +188,5 @@ src/Speech_Sentiment_Analysis/xgb/model.pkl
 src/Speech_Sentiment_Analysis/xgb/features.csv
 src/Speech_Sentiment_Analysis/xgb/scaler.pkl
 src/Speech_Sentiment_Analysis/xgb/label_encoder.pkl
+
+*.zip
