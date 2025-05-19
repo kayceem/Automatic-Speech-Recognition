@@ -180,6 +180,7 @@ cython_debug/
 *.pem
 
 # SER datasets
+data/
 augment
 notebook/dataset
 notebook/audio_file.csv
