@@ -6,8 +6,7 @@ import torch
 
 import torch.nn.functional as F
 import torch.optim as optim
-import torch
-import nn
+import torch.nn as nn
 
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor, EarlyStopping
 from pytorch_lightning.loggers import CometLogger
