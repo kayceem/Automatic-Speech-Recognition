@@ -47,7 +47,7 @@ def downsample(file_path, output_dir, num_workers, output_format='flac'):
     csv_path = os.path.join(output_dir, 'emotion_dataset.csv')
 
     with open(csv_path, mode='w', encoding='utf-8', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=['path', 'emotions'])
+        writer = csv.DictWriter(f, fieldnames=['path', 'emotion'])
         writer.writeheader()
         writer.writerows(data)
 
