@@ -188,3 +188,4 @@ output
 *.pkl
 *.csv
 *.zip
+models/
