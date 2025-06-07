@@ -1,5 +1,5 @@
 import torch
-
+from typing import List
 class TextTransform:
     """Maps characters to integers and vice versa with optimized processing"""
 

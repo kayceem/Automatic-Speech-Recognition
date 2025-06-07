@@ -6,23 +6,8 @@ import torch
 import torch.nn as nn
 
 from collections import OrderedDict
-from model import ConformerEncoder, LSTMDecoder
+from asr.model import ConformerASR
 
-
-# Conformer Model Class
-class ConformerASR(nn.Module):
-    def __init__(self, encoder_params, decoder_params):
-        super(ConformerASR, self).__init__()
-        self.encoder = ConformerEncoder(**encoder_params)
-        self.decoder = LSTMDecoder(**decoder_params)
-
-    def forward(self, x):
-        encoder_output = self.encoder(x)
-        decoder_output = self.decoder(encoder_output)
-        return decoder_output
-
-
-# Hyper parameters of trained_model (conformer small)
 encoder_params = {
     'd_input': 80,       # Input features: n-mels
     'd_model': 144,      # Encoder Dims
