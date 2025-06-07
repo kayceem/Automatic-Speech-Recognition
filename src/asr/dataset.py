@@ -6,8 +6,8 @@ import torch.nn as nn
 import torchaudio.transforms as transforms
 
 from torch.utils.data import DataLoader, Dataset
-# from utils import TextTransform
 
+from asr.helpers import TextTransform
 
 class MelSpec(nn.Module):
     def __init__(self, sample_rate=16000, n_mels=80, hop_length=160):
@@ -57,7 +57,7 @@ class CustomAudioDataset(Dataset):
         file_path = item["key"]
 
         try:
-            waveform, _ = torchaudio.load(file_path)             # Point to location of audio data
+            waveform, _ = torchaudio.load(file_path, backend='soundfile')             # Point to location of audio data
             utterance = item["text"].lower()                     # Point to sentence of audio data
             label = self.text_process.text_to_int(utterance)     # Convert characters to integer map from utils.py
             spectrogram = self.audio_transforms(waveform)        # (channel, feature, time)
