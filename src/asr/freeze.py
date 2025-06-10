@@ -7,6 +7,7 @@ import torch.nn as nn
 
 from collections import OrderedDict
 from asr.model import ConformerASR
+from utils import get_models_dir
 
 encoder_params = {
     'd_input': 80,       # Input features: n-mels
@@ -73,12 +74,13 @@ def main(args):
 
     print("Tracing model...")
     traced_model = trace(model)
-
-    if not os.path.exists(args.save_path):
-        os.makedirs(args.save_path)
-        
-    print("Saving to", args.save_path)
-    traced_model.save(os.path.join(args.save_path, 'optimized_model.pt'))
+    
+    save_path = args.save_path
+    if not save_path:
+        save_path = get_models_dir("asr")
+    
+    print("Saving to", save_path)
+    traced_model.save(os.path.join(save_path, 'asr_optimized_model.pt'))
     print("Done!")
 
 
@@ -86,7 +88,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Freeze and optimize the trained model checkpoint for inference.")
     parser.add_argument('--model_checkpoint', type=str, default=None, required=True,
                         help='Checkpoint of model to optimize')
-    parser.add_argument('--save_path', type=str, default=None, required=True,
+    parser.add_argument('--save_path', type=str, default=None,
                         help='path to save optimized model')
 
     args = parser.parse_args()
