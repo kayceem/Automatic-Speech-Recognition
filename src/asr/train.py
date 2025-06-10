@@ -61,7 +61,7 @@ def main(args):
     # NOTE: Define Trainer callbacks
     checkpoint_callback = ModelCheckpoint(
         monitor="val_loss",
-        dirpath=get_models_dir() / "asr",
+        dirpath=get_models_dir("asr") / "checkpoints",
         filename="Conformer-{epoch:02d}-{val_loss:.2f}-{val_wer:.2f}",
         save_top_k=3,   # 3 Checkpoints
         mode="min",
