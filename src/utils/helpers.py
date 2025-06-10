@@ -9,6 +9,11 @@ def get_data_dir(subfolder=""):
     os.makedirs(path, exist_ok=True)
     return path
 
+def get_assets_dir(subfolder=""):
+    path = Path.joinpath(get_project_root(), "assets", subfolder)
+    os.makedirs(path, exist_ok=True)
+    return path
+
 def get_models_dir(subfolder=""):
     path = Path.joinpath(get_project_root(), "models", subfolder)
     os.makedirs(path, exist_ok=True)
