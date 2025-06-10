@@ -89,13 +89,16 @@ def main(args):
     try:
         # Initialize recorder and ASR engine
         token_path = args.token_path if args.token_path else get_assets_dir() / "tokens.txt"
-        recorder = Recorder()
-        asr_engine = SpeechRecognitionEngine(args.model_file, args.token_path)
-        featurizer = get_featurizer(16000)
+        audio_file = args.audio_file if args.audio_file else None
 
-        # Record audio
-        recorded_audio = recorder.record()
-        audio_file = recorder.save(recorded_audio, "audio_temp.wav")
+        if not audio_file:
+            # Record audio
+            recorder = Recorder()
+            recorded_audio = recorder.record()
+            audio_file = recorder.save(recorded_audio, "audio_temp.wav")
+
+        asr_engine = SpeechRecognitionEngine(args.model_file)
+        featurizer = get_featurizer(16000)
 
         # Transcribe audio
         transcript = asr_engine.transcribe(asr_engine.model, featurizer, audio_file)
@@ -111,6 +114,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ASR Demo: Record and Transcribe Audio")
     parser.add_argument('--model_file', type=str, required=True, help='Path to the optimized ASR model.')
     parser.add_argument('--token_path', type=str, default=None, help='Path to the tokens file.')
+    parser.add_argument('--audio_file', type=str, default=None, help='Path to save the recorded audio file.')
     args = parser.parse_args()
 
     main(args)
