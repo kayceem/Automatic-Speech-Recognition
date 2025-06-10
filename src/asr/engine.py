@@ -6,6 +6,7 @@ import struct
 import argparse
 from asr.dataset import get_featurizer
 from asr.decoder import SpeechRecognitionEngine
+from utils import get_assets_dir
 
 
 class Recorder:
@@ -87,6 +88,7 @@ class Recorder:
 def main(args):
     try:
         # Initialize recorder and ASR engine
+        token_path = args.token_path if args.token_path else get_assets_dir() / "tokens.txt"
         recorder = Recorder()
         asr_engine = SpeechRecognitionEngine(args.model_file, args.token_path)
         featurizer = get_featurizer(16000)
@@ -108,7 +110,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ASR Demo: Record and Transcribe Audio")
     parser.add_argument('--model_file', type=str, required=True, help='Path to the optimized ASR model.')
-    parser.add_argument('--token_path', type=str, default="assets/tokens.txt", help='Path to the tokens file.')
+    parser.add_argument('--token_path', type=str, default=None, help='Path to the tokens file.')
     args = parser.parse_args()
 
     main(args)
