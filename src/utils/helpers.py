@@ -23,3 +23,8 @@ def get_processed_data_dir(subfolder=""):
     path = Path.joinpath(get_project_root(), "data", "processed", subfolder)
     os.makedirs(path, exist_ok=True)
     return path
+    
+def get_raw_data_dir(subfolder=""):
+    path = Path.joinpath(get_project_root(), "data", "raw", subfolder)
+    os.makedirs(path, exist_ok=True)
+    return path
