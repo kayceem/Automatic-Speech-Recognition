@@ -108,7 +108,7 @@ if __name__ == "__main__":
     parser.add_argument('--valid_json', default=None, required=True, type=str, help='json file to load testing data')
 
     # General Train Hyperparameters
-    parser.add_argument('--epochs', default=50, type=int, help='number of total epochs to run')
+    parser.add_argument('--epochs', default=100, type=int, help='number of total epochs to run')
     parser.add_argument('--batch_size', default=32, type=int, help='size of batch')
     parser.add_argument('-lr', '--learning_rate', default=4e-5, type=float, help='learning rate')
     parser.add_argument('--precision', default='16-mixed', type=str, help='precision')
