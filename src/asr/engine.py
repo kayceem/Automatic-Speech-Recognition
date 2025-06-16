@@ -53,19 +53,23 @@ class Recorder:
         silence_start = None
 
         while True:
-            print(f"Recording now...")
-            data = self.stream.read(self.chunk, exception_on_overflow=False)
-            audio_frames.append(data)
+            try:
+                print(f"Recording now...")
+                data = self.stream.read(self.chunk, exception_on_overflow=False)
+                audio_frames.append(data)
 
-            # Detect silence
-            if self.rms(data) < self.silence_threshold:
-                if silence_start is None:
-                    silence_start = time.time()
-                elif time.time() - silence_start >= self.silence_duration:
-                    print("Silence detected. Stopping recording.")
-                    break
-            else:
-                silence_start = None
+                # Detect silence
+                if self.rms(data) < self.silence_threshold:
+                    if silence_start is None:
+                        silence_start = time.time()
+                    elif time.time() - silence_start >= self.silence_duration:
+                        print("Silence detected. Stopping recording.")
+                        break
+                else:
+                    silence_start = None
+            except KeyboardInterrupt:
+                print("Recording interrupted by user.")
+                break
 
         return audio_frames
 
@@ -88,6 +92,7 @@ class Recorder:
 def main(args):
     try:
         # Initialize recorder and ASR engine
+        model_file = args.model_file
         token_path = args.token_path if args.token_path else get_assets_dir() / "tokens.txt"
         audio_file = args.audio_file if args.audio_file else None
 
@@ -97,7 +102,7 @@ def main(args):
             recorded_audio = recorder.record()
             audio_file = recorder.save(recorded_audio, "audio_temp.wav")
 
-        asr_engine = SpeechRecognitionEngine(args.model_file)
+        asr_engine = SpeechRecognitionEngine(model_file, token_path)
         featurizer = get_featurizer(16000)
 
         # Transcribe audio

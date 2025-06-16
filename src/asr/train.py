@@ -63,7 +63,7 @@ def main(args):
         monitor="val_loss",
         dirpath=get_models_dir("asr") / "checkpoints",
         filename="Conformer-{epoch:02d}-{val_loss:.2f}-{val_wer:.2f}",
-        save_top_k=3,   # 3 Checkpoints
+        save_top_k=3,
         mode="min",
     )
 
@@ -71,15 +71,16 @@ def main(args):
     trainer_args = {
         "accelerator": device,
         "devices": args.gpus,
-        "strategy": args.dist_backend if args.gpus > 1 else "auto",   # Distributed Backend for multi GPU training
+        "strategy": args.dist_backend if args.gpus > 1 else "auto",
         "min_epochs": 1,
         "max_epochs": args.epochs,
         "precision": args.precision,
         "check_val_every_n_epoch": 1,
         "gradient_clip_val": 1.0,
+        "accumulate_grad_batches": args.accumulate_grad_batches,
         "callbacks": [
             LearningRateMonitor(logging_interval="epoch"),
-            EarlyStopping(monitor="val_loss", patience=5),  # Early stopping
+            EarlyStopping(monitor="val_loss", patience=5),
             checkpoint_callback,
         ],
         "logger": comet_logger,
@@ -114,6 +115,7 @@ if __name__ == "__main__":
     
     # Checkpoint path
     parser.add_argument('--checkpoint_path', default=None, type=str, help='path to a checkpoint file to resume training')
-
+    parser.add_argument('--accumulate_grad_batches', default=8, type=int, help='Accumulate gradients over n batches')
+    
     args = parser.parse_args()
     main(args)
