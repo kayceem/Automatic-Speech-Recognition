@@ -74,8 +74,12 @@ def main(args):
     random.shuffle(data)
     print("Creating train and test JSON sets")
 
-    train_data = data[:int(length * (1 - percent / 100))]
-    test_data = data[int(length * (1 - percent / 100)):]
+    split_index = int(len(data) * (1 - percent / 100))
+    print(f"Split index: {split_index}")
+
+    train_data = data[:split_index]
+    test_data = data[split_index:]
+
 
     with open(os.path.join(args.save_json_path, 'train.json'), 'w', encoding='utf-8') as f:
         json.dump(train_data, f, ensure_ascii=False, indent=4)
