@@ -84,8 +84,10 @@ def main(args):
     directory = args.file_path.rpartition('/')[0]
     percent = args.percent
     clips_directory = os.path.abspath(os.path.join(args.save_json_path, 'clips'))
-
-    cleaned_tsv_path = clean_tsv(args.file_path, directory, args.num_workers)
+    if args.cleaned:
+        cleaned_tsv_path = args.file_path
+    else:
+        cleaned_tsv_path = clean_tsv(args.file_path, directory, args.num_workers)
     
     if not os.path.exists(clips_directory):
         os.makedirs(clips_directory)
@@ -145,6 +147,8 @@ if __name__ == "__main__":
                         help='percent of clips put into test.json instead of train.json')
     parser.add_argument('--convert', default=True, action='store_true',
                         help='indicates that the script should convert mp3 to flac')
+    parser.add_argument('--cleaned', action='store_true',
+                        help='indicates that the tsv is already cleaned')
     parser.add_argument('--not-convert', dest='convert', action='store_false',
                         help='indicates that the script should not convert mp3 to flac')
     parser.add_argument('-w','--num_workers', type=int, default=2,
