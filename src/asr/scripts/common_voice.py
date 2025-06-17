@@ -9,7 +9,19 @@ from tqdm import tqdm
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from sox.core import SoxiError
+import soundfile as sf
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
+def is_valid_flac(path):
+    """Check if the file is a valid FLAC audio file and not empty."""
+    if not os.path.exists(path) or os.path.getsize(path) == 0:
+        return False
+    try:
+        with sf.SoundFile(path) as f:
+            return f.format == 'FLAC' and f.frames > 0
+    except RuntimeError:
+        return False
+        
 def clean_text(text):
     cleaned_text = re.compile(r'[–\-"`(),:;?!’‘“”…«»\[\]{}&*#@%$^=|_+<>~.ł\t�ß]').sub('', text)
     return cleaned_text
@@ -21,13 +33,14 @@ def process_file(row, clips_directory, directory, output_format):
     audio_path = os.path.join(directory, 'clips', file_name)
     output_audio_path = os.path.join(clips_directory, clips_name)
 
-    # Skip if the input file doesn't exist
+    # # Skip if the input file doesn't exist
     if not os.path.exists(audio_path):
+        print(f"Skipping file as it does not exist: {audio_path}")
         return None
 
     # Skip conversion if the output file already exists
-    if os.path.exists(output_audio_path):
-        return {'key': clips_directory + '/' + clips_name, 'text': text}
+    if is_valid_flac(output_audio_path):
+        return {'key': output_audio_path, 'text': text}
 
     # Check if the input file is valid before processing
     try:
@@ -38,7 +51,33 @@ def process_file(row, clips_directory, directory, output_format):
         print(f"Skipping file due to SoxiError: {audio_path}")
         return None
 
-    return {'key': clips_directory + '/' + clips_name, 'text': text}
+    return {'key': output_audio_path, 'text': text}
+
+def check_file(row, clips_dir):
+    file_path = os.path.join(clips_dir, row['path'])
+    return row if os.path.exists(file_path) else None
+
+def clean_tsv(tsv_path, directory, num_workers=8):
+    output_path = os.path.join(directory, 'cleaned.tsv')
+    clips_dir = os.path.join(directory, 'clips')
+    print(f"Cleaning TSV file: {tsv_path} and saving to {output_path}")
+    with open(tsv_path, newline='', encoding='utf-8') as infile:
+        reader = csv.DictReader(infile, delimiter='\t')
+        fieldnames = reader.fieldnames
+        rows = list(reader)
+
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
+        futures = [executor.submit(check_file, row, clips_dir) for row in rows]
+
+        with open(output_path, 'w', newline='', encoding='utf-8') as outfile:
+            writer = csv.DictWriter(outfile, fieldnames=fieldnames, delimiter='\t')
+            writer.writeheader()
+            for future in as_completed(futures):
+                row = future.result()
+                if row:
+                    writer.writerow(row)
+    print(f"Cleaned TSV file saved to: {output_path}")
+    return output_path
 
 def main(args):
     data = []
@@ -46,16 +85,18 @@ def main(args):
     percent = args.percent
     clips_directory = os.path.abspath(os.path.join(args.save_json_path, 'clips'))
 
+    cleaned_tsv_path = clean_tsv(args.file_path, directory, args.num_workers)
+    
     if not os.path.exists(clips_directory):
         os.makedirs(clips_directory)
-
-    with open(args.file_path, encoding="utf-8") as f:
-        length = sum(1 for _ in f) - 1
-
-    with open(args.file_path, newline='', encoding="utf-8") as csv_file:
+        
+    data_to_process = []
+    with open(cleaned_tsv_path, newline='', encoding="utf-8") as csv_file:
         reader = csv.DictReader(csv_file, delimiter='\t')
-        data_to_process = [(row, clips_directory, directory, args.output_format) for row in reader]
-
+        for row in reader:
+            data_to_process.append([row, clips_directory, directory, args.output_format])
+            
+    length = len(data_to_process)
     if args.convert:
         print(f"{length} files found. Converting MP3 to {args.output_format.upper()} using {args.num_workers} workers.")
         with ThreadPool(args.num_workers) as pool:
@@ -76,7 +117,7 @@ def main(args):
 
     split_index = int(len(data) * (1 - percent / 100))
     print(f"Split index: {split_index}")
-
+    
     train_data = data[:split_index]
     test_data = data[split_index:]
 
