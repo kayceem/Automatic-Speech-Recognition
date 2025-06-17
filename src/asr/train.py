@@ -77,7 +77,6 @@ def main(args):
         "precision": args.precision,
         "check_val_every_n_epoch": 1,
         "gradient_clip_val": 1.0,
-        "accumulate_grad_batches": args.accumulate_grad_batches,
         "callbacks": [
             LearningRateMonitor(logging_interval="epoch"),
             EarlyStopping(monitor="val_loss", patience=5),
@@ -99,7 +98,7 @@ if __name__ == "__main__":
 
     # Train Device Hyperparameters
     parser.add_argument('-g', '--gpus', default=1, type=int, help='number of gpus per node')
-    parser.add_argument('-w', '--num_workers', default=8, type=int, help='n data loading workers')
+    parser.add_argument('-w', '--num_workers', default=64, type=int, help='n data loading workers')
     parser.add_argument('-db', '--dist_backend', default='ddp', type=str,
                         help='which distributed backend to use for aggregating multi-gpu train')
 
@@ -109,13 +108,12 @@ if __name__ == "__main__":
 
     # General Train Hyperparameters
     parser.add_argument('--epochs', default=100, type=int, help='number of total epochs to run')
-    parser.add_argument('--batch_size', default=32, type=int, help='size of batch')
-    parser.add_argument('-lr', '--learning_rate', default=4e-5, type=float, help='learning rate')
+    parser.add_argument('--batch_size', default=256, type=int, help='size of batch')
+    parser.add_argument('-lr', '--learning_rate', default=3e-4, type=float, help='learning rate')
     parser.add_argument('--precision', default='16-mixed', type=str, help='precision')
     
     # Checkpoint path
     parser.add_argument('--checkpoint_path', default=None, type=str, help='path to a checkpoint file to resume training')
-    parser.add_argument('--accumulate_grad_batches', default=8, type=int, help='Accumulate gradients over n batches')
     
     args = parser.parse_args()
     main(args)
