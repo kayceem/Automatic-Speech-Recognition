@@ -17,7 +17,8 @@ from asr.dataset import SpeechDataModule
 
 def main(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
+    torch.set_float32_matmul_precision('medium')
+    
     # Prepare dataset
     data_module = SpeechDataModule(
         batch_size=args.batch_size,
