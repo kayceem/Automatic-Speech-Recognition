@@ -124,7 +124,7 @@ pendulum==3.0.0
 pexpect==4.9.0
 pillow==11.1.0
 platformdirs==4.3.6
-plotly==6.1.0
+#plotly==6.1.0
 pooch==1.8.2
 prometheus_client==0.21.1
 prompt_toolkit==3.0.48
