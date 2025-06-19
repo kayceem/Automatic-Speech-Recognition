@@ -22,7 +22,7 @@ TRAIN_JSON = ./data/processed/asr/train.json
 VALID_JSON = ./data/processed/asr/test.json
 VALIDATED_TSV = ./data/raw/common_voice/cv-corpus-11.0-2023-06-21/en/validated.tsv
 PROCESSED_DIR = ./data/processed/asr/
-ARCHIVE_FILE = common_voice.tar.zst
+ARCHIVE_FILE = ./zipped_data/common_voice.tar.zst
 
 # ========================
 # Main Targets
@@ -45,13 +45,13 @@ preprocess:
 		-w 110
 
 decompress:
-	python compressor.py decompress \
+	python -m src.asr.scripts.compressor decompress \
 		--archive_path $(ARCHIVE_FILE) \
 		--output_dir $(PROCESSED_DIR) \
 		--threads 100
 
 compress:
-	python compressor.py compress \
+	python -m src.asr.scripts.compressor compress \
 		--input_dir $(PROCESSED_DIR) \
 		--output_file $(ARCHIVE_FILE) \
 		--threads 100 \
