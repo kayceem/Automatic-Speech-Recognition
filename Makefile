@@ -15,13 +15,14 @@ SYSTEM_PACKAGES = \
   libbz2-dev \
   liblzma-dev \
   btop \
-  nano
+  nano \
+  zstd
 
 # Directories and paths
 TRAIN_JSON = ./data/processed/asr/train.json
 VALID_JSON = ./data/processed/asr/test.json
 VALIDATED_TSV = ./data/raw/common_voice/cv-corpus-11.0-2023-06-21/en/validated.tsv
-PROCESSED_DIR = ./data/processed/asr/
+PROCESSED_DIR = ./data/processed/
 ARCHIVE_FILE = ./zipped_data/common_voice.tar.zst
 
 # ========================
