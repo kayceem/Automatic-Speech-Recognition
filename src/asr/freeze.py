@@ -61,11 +61,11 @@ def main(args):
 
     # Separate encoder and decoder state dictionaries
     for k, v in model_state_dict.items():
-        if k.startswith('model.encoder.'):
-            name = k.replace('model.encoder.', '')
+        if k.startswith('model._orig_mod.encoder.'):
+            name = k.replace('model._orig_mod.encoder.', '')
             encoder_state_dict[name] = v
-        elif k.startswith('model.decoder.'):
-            name = k.replace('model.decoder.', '')
+        elif k.startswith('model._orig_mod.decoder.'):
+            name = k.replace('model._orig_mod.decoder.', '')
             decoder_state_dict[name] = v
 
     # Load state dictionaries into the model

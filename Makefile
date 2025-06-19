@@ -31,8 +31,8 @@ ARCHIVE_FILE = common_voice.tar.zst
 all: train
 
 setup:
-	sudo apt update
-	sudo apt install -y $(SYSTEM_PACKAGES)
+	apt update
+	apt install -y $(SYSTEM_PACKAGES)
 
 train:
 	python -m src.asr.train --train_json $(TRAIN_JSON) --valid_json $(VALID_JSON)
@@ -56,3 +56,12 @@ compress:
 		--output_file $(ARCHIVE_FILE) \
 		--threads 100 \
 		--compression_level 5
+
+jupyter:
+	nohup jupyter-lab --allow-root --no-browser --port=8888 --ip=0.0.0.0 \
+	  --FileContentsManager.delete_to_trash=False \
+	  --ServerApp.terminado_settings='{"shell_command": ["/bin/bash"]}' \
+	  --ServerApp.token=ihs3rycmswo4lge2tfwz \
+	  --ServerApp.allow_origin='*' \
+	  --ServerApp.preferred_dir=/workspace/ASR-with-Speech-Sentiment-and-Text-Summarizer/ \
+	  > /dev/null 2>&1 &
