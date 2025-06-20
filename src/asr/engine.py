@@ -7,6 +7,7 @@ import argparse
 from asr.dataset import get_featurizer
 from asr.decoder import SpeechRecognitionEngine
 from utils import get_assets_dir
+import os
 
 
 class Recorder:
@@ -94,7 +95,7 @@ def main(args):
         # Initialize recorder and ASR engine
         model_file = args.model_file
         token_path = args.token_path if args.token_path else get_assets_dir() / "tokens.txt"
-        audio_file = args.audio_file if args.audio_file else None
+        audio_file = args.audio_file if args.audio_file and os.path.isfile(args.audio_file) else None
 
         if not audio_file:
             # Record audio

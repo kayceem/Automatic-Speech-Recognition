@@ -24,6 +24,9 @@ VALID_JSON = ./data/processed/asr/test.json
 VALIDATED_TSV = ./data/raw/common_voice/cv-corpus-11.0-2023-06-21/en/validated.tsv
 PROCESSED_DIR = ./data/processed/
 ARCHIVE_FILE = ./zipped_data/common_voice.tar.zst
+MODEL_FILE ?= ./models/asr/asr_optimized_model.pt
+AUDIO_FILE ?= None
+
 
 # ========================
 # Main Targets
@@ -62,7 +65,10 @@ jupyter:
 	nohup jupyter-lab --allow-root --no-browser --port=8888 --ip=0.0.0.0 \
 	  --FileContentsManager.delete_to_trash=False \
 	  --ServerApp.terminado_settings='{"shell_command": ["/bin/bash"]}' \
-	  --ServerApp.token=ihs3rycmswo4lge2tfwz \
+	  --ServerApp.token= \
 	  --ServerApp.allow_origin='*' \
-	  --ServerApp.preferred_dir=/workspace/ASR-with-Speech-Sentiment-and-Text-Summarizer/ \
+	  --ServerApp.preferred_dir=. \
 	  > /dev/null 2>&1 &
+
+run:
+	python -m src.asr.engine --model_file $(MODEL_FILE) --audio_file $(AUDIO_FILE)
