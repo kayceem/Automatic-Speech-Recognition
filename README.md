@@ -1,18 +1,6 @@
 # ASR-with-Speech-Sentiment-&-Text-Summarizer
 
-<div align="center">
-
-![Code in Progress](https://img.shields.io/badge/status-in_progress-yellow.svg) ![License](https://img.shields.io/github/license/LuluW8071/ASR-with-Speech-Sentiment-and-Text-Summarizer) ![Open Issues](https://img.shields.io/github/issues/LuluW8071/ASR-with-Speech-Sentiment-and-Text-Summarizer) ![Closed Issues](https://img.shields.io/github/issues-closed/LuluW8071/ASR-with-Speech-Sentiment-and-Text-Summarizer) ![Open PRs](https://img.shields.io/github/issues-pr/LuluW8071/ASR-with-Speech-Sentiment-and-Text-Summarizer) ![Repo Size](https://img.shields.io/github/repo-size/LuluW8071/ASR-with-Speech-Sentiment-and-Text-Summarizer) ![Contributors](https://img.shields.io/github/contributors/LuluW8071/ASR-with-Speech-Sentiment-and-Text-Summarizer) ![Last Commit](https://img.shields.io/github/last-commit/LuluW8071/ASR-with-Speech-Sentiment-and-Text-Summarizer)
-
-</div>
-
 ## Introduction
-
-<div align="center">
-
-![Animate](docs/animate.gif)
-
-</div>
 
 This project aims to develop an advanced system that integrates __Automatic Speech Recognition (ASR)__, __Speech Emotion Recognition (SER)__, and __Text Summarizer__. The system will address challenges in accurate speech recognition across diverse accents and noisy environments, providing real-time emotional tone interpretation (sentiment analysis), and generating summaries to retain essential information. Targeting applications such as customer service, business meetings, media, and education, this project seeks to enhance documentation, understanding, and emotional context in communication.
 
@@ -38,19 +26,19 @@ This project aims to develop an advanced system that integrates __Automatic Spee
 
 | Base Model </br>(CNN-Bi_LSTM)              | Final Model </br>  |
 |---------------------|-----------------------------------------------|
-| ![Base Model](docs/asr_base_model.png)          |         ![Final Model](docs/conformer.png)   
+| ![Base Model](images/asr_base_model.png)          |         ![Final Model](images/conformer.png)   
 
 ### 2. SER (Speech Emotion Recognition)
 
 | Base Model</br>(XGBoost)            | Final Model </br>  |
 |---------------------|-----------------------------------------------|
-| ![Base Model](docs/ser_base_model.png)          |         ![Code in Progress](https://img.shields.io/badge/status-in_progress-red.svg) 
+| ![Base Model](images/ser_base_model.png)          |         ![Code in Progress](https://img.shields.io/badge/status-in_progress-red.svg) 
 
 ### 3. Text Summarizer
 
 | Base Model </br>(T5-Small, T5-Base)           | Final Model </br>  |
 |---------------------|-----------------------------------------------|
-| ![Base Model](docs/text_summarizer_base_model.png)         |         !![Final Model](docs/bart.png) 
+| ![Base Model](images/text_summarizer_base_model.png)         |         !![Final Model](images/bart.png) 
 
 ## High Level Next Steps
 
@@ -258,7 +246,7 @@ The code styling adheres to `autopep8` formatting.
 |--------------------|-----------------------------|-------------------|
 | ASR                | [CNN-BiLSTM](https://img.shields.io/badge/status-in_progress-red.svg) | ![Train in Progress](https://img.shields.io/badge/status-in_progress-red.svg) |
 | Speech Sentiment   | [XGBoost](https://img.shields.io/badge/status-in_progress-red.svg)  | ![Train in Progress](https://img.shields.io/badge/status-in_progress-red.svg) |
-| Text Summarizer    | ![T5 Base Model Loss](docs/Summarizer_base_loss_curve.png) | ![Train in Progress](https://img.shields.io/badge/status-in_progress-red.svg) |
+| Text Summarizer    | ![T5 Base Model Loss](images/Summarizer_base_loss_curve.png) | ![Train in Progress](https://img.shields.io/badge/status-in_progress-red.svg) |
 
 ### Evaluation Metrics Results
 
@@ -266,4 +254,4 @@ The code styling adheres to `autopep8` formatting.
 |--------------------|-----------------------------|-------------------|
 | ASR                | [CNN-BiLSTM](https://img.shields.io/badge/status-in_progress-red.svg) | ![Train in Progress](https://img.shields.io/badge/status-in_progress-red.svg) |
 | Speech Sentiment   | [XGBoost](https://img.shields.io/badge/status-in_progress-red.svg)  | ![Train in Progress](https://img.shields.io/badge/status-in_progress-red.svg) |
-| Text Summarizer    | ![T5 Base Model Metrics](docs/Summarizer_T5Small_Metrics.png)</br> ![T5 Base Model Metrics](docs/Summarizer_T5Base_Metrics.png) | ![Train in Progress](https://img.shields.io/badge/status-in_progress-red.svg) |
+| Text Summarizer    | ![T5 Base Model Metrics](images/Summarizer_T5Small_Metrics.png)</br> ![T5 Base Model Metrics](images/Summarizer_T5Base_Metrics.png) | ![Train in Progress](https://img.shields.io/badge/status-in_progress-red.svg) |
