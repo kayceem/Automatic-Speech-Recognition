@@ -1,6 +1,6 @@
-[submodule "src/ASR-with-Speech-Sentiment-Analysis-Text-Summarizer/Automatic_Speech_Recognition/submodules/mimic-recording-studio"]
-	path = src/ASR-with-Speech-Sentiment-Analysis-Text-Summarizer/Automatic_Speech_Recognition/submodules/mimic-recording-studio
+[submodule "src/asr/submodules/mimic-recording-studio"]
+	path = src/asr/submodules/mimic-recording-studio
 	url = https://github.com/MycroftAI/mimic-recording-studio.git
-[submodule "src/ASR-with-Speech-Sentiment-Analysis-Text-Summarizer/Automatic_Speech_Recognition/submodules/ctcdecode"]
-	path = src/ASR-with-Speech-Sentiment-Analysis-Text-Summarizer/Automatic_Speech_Recognition/submodules/ctcdecode
+[submodule "src/asr/submodules/ctcdecode"]
+	path = src/asr/submodules/ctcdecode
 	url = https://github.com/WayenVan/ctcdecode.git
