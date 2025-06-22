@@ -56,3 +56,38 @@ def splitIntoChunks(mel_spec, win_size, stride):
             chunks.append(chunk)
 
     return np.stack(chunks, axis=0)
+    # t = mel_spec.shape[1]
+    # num_chunks = max(1, (t - win_size) // stride + 1)
+    
+    # chunks = []
+    # for i in range(num_chunks):
+    #     start = i * stride
+    #     end = start + win_size
+    #     if end <= t:
+    #         chunk = mel_spec[:, start:end]
+    #         chunks.append(chunk)
+    
+    # if not chunks:  # Fallback if no valid chunks
+    #     # Pad or truncate to win_size
+    #     chunk = np.zeros((mel_spec.shape[0], win_size))
+    #     chunk[:, :min(win_size, mel_spec.shape[1])] = mel_spec[:, :min(win_size, mel_spec.shape[1])]
+    #     chunks.append(chunk)
+        
+    # return np.stack(chunks, axis=0)
+
+    
+def addNoise(signal, snr_low, snr_high):
+    """Add white Gaussian noise to signal"""
+    noise = np.random.normal(size=len(signal))
+    
+    # Calculate signal and noise power
+    signal_power = np.sum(signal ** 2) / len(signal)
+    noise_power = np.sum(noise ** 2) / len(noise)
+    
+    # Random SNR
+    target_snr = np.random.randint(snr_low, snr_high)
+    
+    # Calculate scaling factor
+    k = np.sqrt((signal_power / noise_power) * 10 ** (- target_snr / 10))
+    
+    return signal + k * noise

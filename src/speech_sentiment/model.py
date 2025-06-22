@@ -51,7 +51,7 @@ class HybridModel(nn.Module):
             TimeDistributed(nn.BatchNorm2d(16)),
             TimeDistributed(nn.ReLU()),
             TimeDistributed(nn.MaxPool2d(kernel_size=2, stride=2)),
-            TimeDistributed(nn.Dropout(p=0.3)),
+            TimeDistributed(nn.Dropout(p=0.4)),
             # 2. Convolutional Block
             TimeDistributed(nn.Conv2d(in_channels=16,
                                    out_channels=32,
@@ -61,7 +61,7 @@ class HybridModel(nn.Module):
             TimeDistributed(nn.BatchNorm2d(32)),
             TimeDistributed(nn.ReLU()),
             TimeDistributed(nn.MaxPool2d(kernel_size=4, stride=4)),
-            TimeDistributed(nn.Dropout(p=0.3)),
+            TimeDistributed(nn.Dropout(p=0.4)),
             # 3. Convolutional Block
             TimeDistributed(nn.Conv2d(in_channels=32,
                                    out_channels=64,
@@ -71,13 +71,24 @@ class HybridModel(nn.Module):
             TimeDistributed(nn.BatchNorm2d(64)),
             TimeDistributed(nn.ReLU()),
             TimeDistributed(nn.MaxPool2d(kernel_size=4, stride=4)),
-            TimeDistributed(nn.Dropout(p=0.3))
+            TimeDistributed(nn.Dropout(p=0.4)),
+            # 4. Convolutional Block
+            TimeDistributed(nn.Conv2d(in_channels=64,
+                                   out_channels=128,
+                                   kernel_size=3,
+                                   stride=1,
+                                   padding=1)),
+            TimeDistributed(nn.BatchNorm2d(128)),
+            TimeDistributed(nn.ReLU()),
+            TimeDistributed(nn.MaxPool2d(kernel_size=4, stride=4)),
+            TimeDistributed(nn.Dropout(p=0.4))
         )
         
         # LSTM Block
         hidden_size = 64
-        self.lstm = nn.LSTM(input_size=1024, hidden_size=hidden_size, bidirectional=True, batch_first=True)
-        self.dropout_lstm = nn.Dropout(p=0.4)
+        self.lstm_input_size = None
+
+        self.dropout_lstm = nn.Dropout(p=0.5)
         self.attention_linear = nn.Linear(2 * hidden_size, 1)  # 2 * hidden_size for bidirectional LSTM
         
         # Linear layer for output classification
@@ -88,6 +99,10 @@ class HybridModel(nn.Module):
         
         conv_embedding = torch.flatten(conv_embedding, start_dim=2)
         
+        if self.lstm_input_size is None:
+            self.lstm_input_size = conv_embedding.size(-1)
+            self.lstm = nn.LSTM(input_size=self.lstm_input_size, hidden_size=64,
+                                bidirectional=True, batch_first=True).to(x.device)
         # Apply LSTM layers
         lstm_embedding, (h, c) = self.lstm(conv_embedding)
         lstm_embedding = self.dropout_lstm(lstm_embedding)
