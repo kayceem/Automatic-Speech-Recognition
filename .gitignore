@@ -189,5 +189,4 @@ output
 *.zip
 models/
 _version.py
-assets/
 *.wav
