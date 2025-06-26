@@ -226,23 +226,22 @@ def main():
                 print(f"  {key}: {value}")
         return
     
-    # Process single file
-    if args.file:
-        try:
-            result = engine.predict_single(args.file, args.probabilities)
-            print(f"\nPrediction for {args.file}:")
-            print(f"Emotion: {result['predicted_emotion']}")
-            print(f"Confidence: {result['confidence']:.3f}")
-            if args.probabilities:
-                print("Probabilities:")
-                for emotion, prob in result['probabilities'].items():
-                    print(f"  {emotion}: {prob:.3f}")
-        except Exception as e:
-            print(f"Error processing file: {e}")
+    if not args.file:
+        print("No input provided.")
         return
+
+    try:
+        result = engine.predict_single(args.file, args.probabilities)
+        print(f"\nPrediction for {args.file}:")
+        print(f"Emotion: {result['predicted_emotion']}")
+        print(f"Confidence: {result['confidence']:.3f}")
+        if args.probabilities:
+            print("Probabilities:")
+            for emotion, prob in result['probabilities'].items():
+                print(f"  {emotion}: {prob:.3f}")
+    except Exception as e:
+        print(f"Error processing file: {e}")
+    return
     
-    print("No input provided.")
-
-
 if __name__ == "__main__":
     main()
