@@ -203,8 +203,8 @@ class XGBSpeechEmotionInference:
 def main():
     """Main function with command line interface"""
     parser = argparse.ArgumentParser(description="XGBoost Speech Emotion Recognition Inference")
-    parser.add_argument('--model-path', type=str, help='Path to model directory')
-    parser.add_argument('--file', type=str, help='Single audio file to process')
+    parser.add_argument('--model-path', required=True, type=str, help='Path to model directory')
+    parser.add_argument('--file',required=True ,type=str, help='Single audio file to process')
     parser.add_argument('--probabilities', action='store_true', help='Return class probabilities')
     parser.add_argument('--info', action='store_true', help='Show model information and exit')
     
@@ -226,10 +226,6 @@ def main():
                 print(f"  {key}: {value}")
         return
     
-    if not args.file:
-        print("No input provided.")
-        return
-
     try:
         result = engine.predict_single(args.file, args.probabilities)
         print(f"\nPrediction for {args.file}:")
