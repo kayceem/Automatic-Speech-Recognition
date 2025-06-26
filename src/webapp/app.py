@@ -10,7 +10,7 @@ import text_summarizer
 from asr.dataset import get_featurizer
 from asr.decoder import SpeechRecognitionEngine
 from asr.engine import Recorder
-from utils.helpers import get_assets_dir
+from utils.helpers import get_assets_dir, get_models_dir
 
 
 app = Flask(__name__)
@@ -57,21 +57,6 @@ def transcribe_audio():
         if asr_engine is None:
             return jsonify({"error": "ASR Engine is not initialized."}), 500
 
-        # Check if file is in request
-        if "file" not in request.files:
-            return jsonify({"error": "No file provided"}), 400
-
-        file = request.files["file"]
-        if file.filename == "":
-            return jsonify({"error": "No file selected"}), 400
-
-        # Secure filename and save file
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-
-        print(f"File saved: {file_path}")
-
         recorded_audio = recorder.record()
         recorder.save(recorded_audio, "temp/audio_temp.wav")
         print("\nAudio recorded")
@@ -105,10 +90,11 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ASR Demo: Record and Transcribe Audio")
-    parser.add_argument('--model_path', type=str, required=True, help='Path to the optimized ASR model.')
+    parser.add_argument('--model_path', type=str, default=None, help='Path to the optimized ASR model.')
     parser.add_argument('--token_path', type=str, default=None, help='Path to the tokens file.')
     args = parser.parse_args()
     args.token_path = args.token_path if args.token_path else get_assets_dir() / "tokens.txt"
+    args.model_path = args.model_path if args.model_path else get_models_dir("asr") / "asr_optimized_model.pt"
 
     main(args)
     
