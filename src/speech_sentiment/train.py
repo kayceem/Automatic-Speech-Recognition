@@ -413,16 +413,21 @@ def main():
     # Load and prepare data
     data_splits, emotions = load_and_prepare_data(args.data_path)
     
-    # Fit scaler
-    train_paths, train_labels = data_splits['train']
-    # scaler = fit_scaler(train_paths, train_labels)
-    scaler = fit_scaler_full(train_paths, train_labels)
-    
-    # Save scaler
+    # Load or fit scaler
     scaler_path = model_dir / 'scaler.pkl'
-    joblib.dump(scaler, scaler_path)
-    logger.info(f"Scaler saved to {scaler_path}")
-    
+    train_paths, train_labels = data_splits['train']
+    if scaler_path.exists():
+        scaler = joblib.load(scaler_path)
+        logger.info(f"Loaded existing scaler from {scaler_path}")
+    else:
+        logger.info("Fitting new scaler...")
+        # scaler = fit_scaler(train_paths, train_labels)
+        scaler = fit_scaler_full(train_paths, train_labels)
+        
+        # Save scaler
+        joblib.dump(scaler, scaler_path)
+        logger.info(f"Scaler fitted and saved to {scaler_path}")
+
     # Create datasets
     train_dataset = SpeechEmotionDataset(train_paths, train_labels, augment=True, scaler=scaler)
     val_dataset = SpeechEmotionDataset(*data_splits['val'], augment=False, scaler=scaler)
