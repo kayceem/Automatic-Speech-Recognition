@@ -11,18 +11,18 @@ summaryDisplay = document.getElementById("summary");
 
 recordBtn.addEventListener("click", toggleRecording);
 
-summarizeBtn.addEventListener("click", function() {
-    fetch("/get-summary")
-        .then(response => response.json())
-        .then(data => {
-            console.log(data)
-            summaryDisplay.textContent = data.summary;
-        })
-        .catch((err) => {
-            console.error("Error during summarization:", err);
-            summaryDisplay.textContent = "Error during summarization.";
-        });
-});
+// summarizeBtn.addEventListener("click", function() {
+//     fetch("/get-summary")
+//         .then(response => response.json())
+//         .then(data => {
+//             console.log(data)
+//             summaryDisplay.textContent = data.summary;
+//         })
+//         .catch((err) => {
+//             console.error("Error during summarization:", err);
+//             summaryDisplay.textContent = "Error during summarization.";
+//         });
+// });
 
 class AudioVisualizer {
     constructor(audioContext, processFrame, processError) {
@@ -167,7 +167,7 @@ function stopRecording() {
 
 function transcribeAudio(audioBlob) {
     const formData = new FormData();
-    formData.append("file", audioBlob, "audio_temp.wav"); 
+    formData.append("file", audioBlob, "temp/audio_temp.wav"); 
     fetch("/transcribe/", {
         method: "POST",
         body: formData,
@@ -177,15 +177,15 @@ function transcribeAudio(audioBlob) {
             resultDisplay.textContent = data.transcription;
             //remove disabled from summarizeBtn
             summarizeBtn.disabled = false;
-            fetch("/get-emotion")
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                    emotionDisplay.textContent = data.emotion;
-                })
-                .catch((err) => {
-                    console.error("Error during transcription:", err);
-                });
+            // fetch("/get-emotion")
+            //     .then(response => response.json())
+            //     .then(data => {
+            //         console.log(data);
+            //         emotionDisplay.textContent = data.emotion;
+            //     })
+            //     .catch((err) => {
+            //         console.error("Error during transcription:", err);
+            //     });
         })
         .catch((err) => {
             console.error("Error during transcription:", err);

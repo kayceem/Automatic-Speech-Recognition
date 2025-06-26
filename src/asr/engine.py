@@ -74,7 +74,7 @@ class Recorder:
 
         return audio_frames
 
-    def save(self, waveforms, filename="audio_temp.wav"):
+    def save(self, waveforms, filename="temp/audio_temp.wav"):
         """
         Save the recorded audio to a WAV file.
         """
@@ -101,7 +101,7 @@ def main(args):
             # Record audio
             recorder = Recorder()
             recorded_audio = recorder.record()
-            audio_file = recorder.save(recorded_audio, "audio_temp.wav")
+            audio_file = recorder.save(recorded_audio, "temp/audio_temp.wav")
 
         asr_engine = SpeechRecognitionEngine(model_file, token_path)
         featurizer = get_featurizer(16000)

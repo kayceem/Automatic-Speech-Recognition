@@ -10,6 +10,7 @@ import text_summarizer
 from asr.dataset import get_featurizer
 from asr.decoder import SpeechRecognitionEngine
 from asr.engine import Recorder
+from utils.helpers import get_assets_dir
 
 
 app = Flask(__name__)
@@ -36,13 +37,13 @@ def index():
 
 @app.route("/get-emotion", methods=["GET"])
 def get_emotion():
-    emotion = speech_sentiment.process_audio("audio_temp.wav")
+    emotion = speech_sentiment.process_audio("temp/audio_temp.wav")
     
     return {"emotion" : emotion}
 
 @app.route("/get-summary", methods=["GET"])
 def get_summary():
-    with open("transcription.txt", "r") as f:
+    with open("temp/transcription.txt", "r") as f:
         transcript = f.read()
         summary = text_summarizer.summarize_texts(transcript)
         return {"summary" : summary}
@@ -72,16 +73,16 @@ def transcribe_audio():
         print(f"File saved: {file_path}")
 
         recorded_audio = recorder.record()
-        recorder.save(recorded_audio, "audio_temp.wav")
+        recorder.save(recorded_audio, "temp/audio_temp.wav")
         print("\nAudio recorded")
 
         # Use the preloaded ASR Engine to transcribe
-        transcript = asr_engine.transcribe(asr_engine.model, featurizer, "audio_temp.wav")
+        transcript = asr_engine.transcribe(asr_engine.model, featurizer, "temp/audio_temp.wav")
 
         print("\nTranscription:")
         print(transcript)
 
-        with open("transcription.txt", "w") as f:
+        with open("temp/transcription.txt", "w") as f:
             f.write(transcript)
 
         return jsonify({"transcription": transcript})
@@ -95,7 +96,7 @@ def main(args):
     global asr_engine
     print("Loading Speech Recognition Engine into cache...")
     try:
-        asr_engine = SpeechRecognitionEngine(args.model_file, args.token_path) 
+        asr_engine = SpeechRecognitionEngine(args.model_path, args.token_path) 
         print("ASR Engine loaded successfully.")
     except Exception as e:
         print(f"Error loading ASR Engine: {e}")
@@ -104,9 +105,10 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ASR Demo: Record and Transcribe Audio")
-    parser.add_argument('--model_file', type=str, required=True, help='Path to the optimized ASR model.')
-    parser.add_argument('--token_path', type=str, default="token.txt", help='Path to the tokens file.')
+    parser.add_argument('--model_path', type=str, required=True, help='Path to the optimized ASR model.')
+    parser.add_argument('--token_path', type=str, default=None, help='Path to the tokens file.')
     args = parser.parse_args()
+    args.token_path = args.token_path if args.token_path else get_assets_dir() / "tokens.txt"
 
     main(args)
     
