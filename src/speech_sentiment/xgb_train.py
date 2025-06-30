@@ -50,6 +50,8 @@ class XGBSpeechEmotionTrainer:
                 'max_depth': [3, 5, 7],
                 'learning_rate': [0.01, 0.1, 0.2],
                 'n_estimators': [100, 500, 1000],
+                'tree_method': ['gpu_hist'],  # Force GPU usage
+                'gpu_id': [0], 
             },
             'cv_folds': 5,
             'verbose': True
@@ -234,7 +236,10 @@ class XGBSpeechEmotionTrainer:
             objective='multi:softprob',
             num_class=len(np.unique(self.y_train)),
             random_state=self.config['random_state'],
-            n_jobs=-1
+            # n_jobs=-1,
+            tree_method='gpu_hist',
+            gpu_id=0,
+            predictor='gpu_predictor',
         )
         
         # Setup GridSearchCV
@@ -247,13 +252,11 @@ class XGBSpeechEmotionTrainer:
             cv=self.config['cv_folds'],
             scoring='accuracy',
             n_jobs=-1,
-            verbose=1 if self.config['verbose'] else 0
+            verbose=2 if self.config['verbose'] else 0
         )
         
         # Fit with progress tracking
-        with tqdm(total=1, desc="Grid Search Progress") as pbar:
-            grid_search.fit(self.X_train, self.y_train)
-            pbar.update(1)
+        grid_search.fit(self.X_train, self.y_train)
         
         self.best_model = grid_search.best_estimator_
         
