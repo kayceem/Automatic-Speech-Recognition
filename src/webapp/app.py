@@ -2,6 +2,7 @@ import os
 import argparse
 
 from flask import Flask, request, jsonify, send_from_directory
+import torch
 from werkzeug.utils import secure_filename
 
 import speech_sentiment
@@ -25,8 +26,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Initialize shared objects at startup
-recorder = Recorder()               # Initialize recorder
-featurizer = get_featurizer(16000)  # Initialize featurizer
+recorder = Recorder()    
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")           # Initialize recorder
+featurizer = get_featurizer(sample_rate=16000, device=device)  # Initialize featurizer
 
 asr_engine = None  # Initialize to None, to avoid issues during startup
 
@@ -62,7 +64,7 @@ def transcribe_audio():
         print("\nAudio recorded")
 
         # Use the preloaded ASR Engine to transcribe
-        transcript = asr_engine.transcribe(asr_engine.model, featurizer, "temp/audio_temp.wav")
+        transcript = asr_engine.transcribe(featurizer, "temp/audio_temp.wav")
 
         print("\nTranscription:")
         print(transcript)
