@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Analysis Results</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Speech Analysis Results</h1>
+            <div class="timestamp" id="timestamp"></div>
+        </header>
+
+        <div class="content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Transcription</h2>
+                    <button class="copy-btn" id="copyTranscription" title="Copy to clipboard">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    </button>
+                </div>
+                <div class="card-content">
+                    <div id="transcriptionText" class="text-content">
+                        Loading transcription...
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Emotion Analysis</h2>
+                </div>
+                <div class="card-content">
+                    <div id="emotionResult" class="emotion-result">
+                        Loading emotion analysis...
+                    </div>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button id="refreshBtn" class="btn btn-secondary">
+                    Refresh
+                </button>
+                <button id="generateSummaryBtn" class="btn btn-primary">
+                    Generate Summary
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="results.js"></script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Analysis Summary</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Text Summary</h1>
+            <div class="timestamp" id="timestamp"></div>
+        </header>
+
+        <div class="content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Generated Summary</h2>
+                    <div class="header-actions">
+                        <button class="copy-btn" id="copySummary" title="Copy to clipboard">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div id="summaryText" class="text-content">
+                        Loading summary...
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Original Transcription</h2>
+                </div>
+                <div class="card-content">
+                    <div id="transcriptionText" class="text-content original-text">
+                        Loading original transcription...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast hidden">
+        <span id="toastMessage"></span>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <div class="loading-text">Generating summary...</div>
+        </div>
+    </div>
+
+    <script src="summary.js"></script>
+</body>
+</html>
