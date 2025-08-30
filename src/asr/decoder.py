@@ -23,11 +23,11 @@ class SpeechRecognitionEngine:
             lexicon=files.lexicon,
             tokens=tokens,
             lm=files.lm,
-            nbest=10,
-            beam_size=100,
-            beam_threshold=10,
-            lm_weight=3.23,
-            word_score=-0.26,
+            nbest=20,
+            beam_size=150,
+            beam_threshold=15,
+            lm_weight=2.5,
+            word_score=-0.2,
         )
         print("Loaded beam search with Ken LM")
 

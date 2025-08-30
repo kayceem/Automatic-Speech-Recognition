@@ -191,3 +191,4 @@ models/
 _version.py
 *.wav
 temp/
+local_bart_samsum/
