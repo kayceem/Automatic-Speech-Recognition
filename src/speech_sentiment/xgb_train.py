@@ -231,6 +231,11 @@ class XGBSpeechEmotionTrainer:
         """Train XGBoost model with hyperparameter tuning"""
         self.logger.info("Starting model training with hyperparameter tuning...")
         
+        # Calculate sample weights for imbalanced classes
+        from sklearn.utils.class_weight import compute_sample_weight
+        sample_weights = compute_sample_weight('balanced', self.y_train)
+        self.logger.info(f"Sample weights computed for {len(np.unique(self.y_train))} classes")
+        
         # Initialize XGBoost classifier
         self.model = xgb.XGBClassifier(
             objective='multi:softprob',
@@ -255,8 +260,8 @@ class XGBSpeechEmotionTrainer:
             verbose=2 if self.config['verbose'] else 0
         )
         
-        # Fit with progress tracking
-        grid_search.fit(self.X_train, self.y_train)
+        # Fit with sample weights
+        grid_search.fit(self.X_train, self.y_train, sample_weight=sample_weights)
         
         self.best_model = grid_search.best_estimator_
         
@@ -268,6 +273,28 @@ class XGBSpeechEmotionTrainer:
         self.metrics['best_params'] = grid_search.best_params_
         self.metrics['best_cv_score'] = grid_search.best_score_
         self.metrics['cv_results'] = grid_search.cv_results_
+
+        # --- Post-hoc Probability Calibration ---
+        from sklearn.calibration import CalibratedClassifierCV
+        self.logger.info("Applying post-hoc probability calibration using isotonic regression...")
+
+        X_train_sub, X_calib, y_train_sub, y_calib = train_test_split(
+            self.X_train, self.y_train,
+            test_size=0.1,
+            random_state=self.config['random_state']
+        )
+
+        # Fit the best model on the subset
+        self.best_model.fit(X_train_sub, y_train_sub)
+
+        # Apply isotonic calibration
+        calibrator = CalibratedClassifierCV(self.best_model, method='isotonic', cv='prefit')
+        calibrator.fit(X_calib, y_calib)
+
+        # Replace the model with calibrated version
+        self.best_model = calibrator
+        self.logger.info("Calibration completed successfully. Model probabilities are now calibrated.")
+
     
     def evaluate_model(self):
         """Evaluate the trained model"""
@@ -276,6 +303,20 @@ class XGBSpeechEmotionTrainer:
         # Make predictions
         y_pred = self.best_model.predict(self.X_test)
         y_pred_proba = self.best_model.predict_proba(self.X_test)
+        y_pred_proba = self.best_model.predict_proba(self.X_test)
+
+        # --- Uncertainty estimation ---
+        # Compute prediction entropy as uncertainty measure
+        prediction_entropy = -np.sum(y_pred_proba * np.log(np.clip(y_pred_proba, 1e-10, 1.0)), axis=1)
+        mean_entropy = np.mean(prediction_entropy)
+        mean_confidence = np.mean(np.max(y_pred_proba, axis=1))
+
+        self.logger.info(f"Average calibrated confidence: {mean_confidence:.4f}")
+        self.logger.info(f"Average prediction entropy (uncertainty): {mean_entropy:.4f}")
+
+        # Store for analysis
+        self.metrics["mean_calibrated_confidence"] = float(mean_confidence)
+        self.metrics["mean_prediction_entropy"] = float(mean_entropy)
         
         # Calculate metrics
         accuracy = accuracy_score(self.y_test, y_pred)

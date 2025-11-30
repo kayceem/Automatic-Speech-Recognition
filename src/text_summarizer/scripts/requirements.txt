@@ -1,0 +1,13 @@
+datasets==3.6.0
+torch>=2.8.0
+numpy>=1.26.4
+pandas>=2.2.3
+scipy>=1.14.1
+scikit-learn>=1.6.0
+transformers>=4.57.1
+nltk>=3.9.2
+plotly>=6.4.0
+kaleido
+evaluate>=0.4.6
+rouge_score
+accelerate>=0.26.0

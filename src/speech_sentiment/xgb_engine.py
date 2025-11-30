@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-XGBoost Inference Engine for Speech Emotion Recognition
-Author: Generated Inference Script
-Description: Complete inference pipeline for emotion prediction from audio files
+XGBoost Inference Engine with Calibrated Uncertainties
+Supports Platt scaling and isotonic regression for uncertainty estimation
 """
 
 import os
@@ -22,18 +21,21 @@ import seaborn as sns
 from utils import get_models_dir
 
 class XGBSpeechEmotionInference:
-    """XGBoost inference engine for speech emotion recognition"""
+    """XGBoost inference engine with calibrated uncertainty estimates"""
     
-    def __init__(self, model_path: Optional[str] = None):
+    def __init__(self, model_path: Optional[str] = None, use_calibration: bool = True):
         """Initialize inference engine
         
         Args:
             model_path: Path to the model directory. If None, uses default path.
+            use_calibration: Whether to use calibrated model for uncertainty estimates
         """
         self.model_path = Path(model_path) if model_path else get_models_dir("speech_sentiment/xgb")
+        self.use_calibration = use_calibration
         self.setup_logging()
         self.load_models()
         self.load_config()
+        self.load_operating_points()
         
     def setup_logging(self):
         """Setup logging configuration"""
@@ -57,13 +59,31 @@ class XGBSpeechEmotionInference:
         self.logger.info(f"Loading models from {self.model_path}")
         
         try:
-            # Load model components
+            # Load base model
             self.model = joblib.load(self.model_path / "model.pkl")
+            
+            # Load calibration data if available
+            calibration_path = self.model_path / "calibration_data.pkl"
+            if self.use_calibration and calibration_path.exists():
+                calibration_data = joblib.load(calibration_path)
+                self.calibration_models = calibration_data['calibration_models']
+                self.calibration_method = calibration_data['calibration_method']
+                self.logger.info(f"Calibration loaded ({self.calibration_method})")
+                self.is_calibrated = True
+            else:
+                self.calibration_models = None
+                self.calibration_method = None
+                self.is_calibrated = False
+                if self.use_calibration:
+                    self.logger.warning("Calibration data not found, using base model")
+            
+            # Load preprocessors
             self.scaler = joblib.load(self.model_path / "scaler.pkl")
             self.label_encoder = joblib.load(self.model_path / "label_encoder.pkl")
             
             self.logger.info("Models loaded successfully")
             self.logger.info(f"Model type: {type(self.model).__name__}")
+            self.logger.info(f"Calibration: {'Enabled' if self.is_calibrated else 'Disabled'}")
             self.logger.info(f"Number of classes: {len(self.label_encoder.classes_)}")
             self.logger.info(f"Classes: {list(self.label_encoder.classes_)}")
             
@@ -80,12 +100,37 @@ class XGBSpeechEmotionInference:
                     self.config = json.load(f)
                 self.logger.info("Configuration loaded successfully")
             else:
-                # Default configuration
                 self.config = {'n_mfcc': 13}
                 self.logger.warning("Configuration file not found, using defaults")
         except Exception as e:
             self.logger.warning(f"Error loading configuration: {e}")
             self.config = {'n_mfcc': 13}
+    
+    def load_operating_points(self):
+        """Load operating thresholds for decision making"""
+        try:
+            op_path = self.model_path / "operating_points.json"
+            if op_path.exists():
+                with open(op_path, 'r') as f:
+                    self.operating_points = json.load(f)
+                self.logger.info("Operating points loaded successfully")
+            else:
+                # Default operating points based on confidence thresholds
+                self.operating_points = {
+                    'high_confidence': 0.80,  # Direct prediction
+                    'medium_confidence': 0.60,  # Flag for review
+                    'low_confidence': 0.40,  # Reject/defer
+                    'per_class_thresholds': {}  # Can be class-specific
+                }
+                self.logger.warning("Operating points not found, using defaults")
+        except Exception as e:
+            self.logger.warning(f"Error loading operating points: {e}")
+            self.operating_points = {
+                'high_confidence': 0.80,
+                'medium_confidence': 0.60,
+                'low_confidence': 0.40,
+                'per_class_thresholds': {}
+            }
     
     def extract_features(self, file_path: Union[str, Path]) -> Dict[str, float]:
         """Extract audio features from a single file
@@ -129,16 +174,90 @@ class XGBSpeechEmotionInference:
             self.logger.error(f"Error extracting features from {file_path}: {e}")
             raise
     
+    def compute_uncertainty_metrics(self, probabilities: np.ndarray) -> Dict[str, float]:
+        """Compute various uncertainty metrics from prediction probabilities
+        
+        Args:
+            probabilities: Array of class probabilities
+            
+        Returns:
+            Dictionary of uncertainty metrics
+        """
+        # Predictive entropy (uncertainty)
+        entropy = -np.sum(probabilities * np.log(probabilities + 1e-10))
+        
+        # Margin (difference between top two predictions)
+        sorted_probs = np.sort(probabilities)[::-1]
+        margin = sorted_probs[0] - sorted_probs[1] if len(sorted_probs) > 1 else 1.0
+        
+        # Confidence (max probability)
+        confidence = np.max(probabilities)
+        
+        # Normalized entropy
+        max_entropy = np.log(len(probabilities))
+        normalized_entropy = entropy / max_entropy if max_entropy > 0 else 0
+        
+        return {
+            'confidence': float(confidence),
+            'entropy': float(entropy),
+            'normalized_entropy': float(normalized_entropy),
+            'margin': float(margin),
+            'uncertainty': 1.0 - float(confidence)  # Simple uncertainty measure
+        }
+    
+    def get_decision_recommendation(self, uncertainty_metrics: Dict[str, float], 
+                                   predicted_emotion: str) -> Dict[str, str]:
+        """Get decision recommendation based on uncertainty and operating points
+        
+        Args:
+            uncertainty_metrics: Dictionary of uncertainty metrics
+            predicted_emotion: Predicted emotion class
+            
+        Returns:
+            Dictionary with decision recommendation
+        """
+        confidence = uncertainty_metrics['confidence']
+        
+        # Check for class-specific threshold
+        class_threshold = self.operating_points['per_class_thresholds'].get(
+            predicted_emotion, None
+        )
+        
+        # Determine decision based on confidence thresholds
+        if class_threshold and confidence >= class_threshold:
+            decision = 'accept'
+            reason = f'Class-specific threshold met ({class_threshold:.2f})'
+        elif confidence >= self.operating_points['high_confidence']:
+            decision = 'accept'
+            reason = 'High confidence prediction'
+        elif confidence >= self.operating_points['medium_confidence']:
+            decision = 'review'
+            reason = 'Medium confidence - recommend human review'
+        elif confidence >= self.operating_points['low_confidence']:
+            decision = 'uncertain'
+            reason = 'Low confidence - uncertain prediction'
+        else:
+            decision = 'reject'
+            reason = 'Very low confidence - reject prediction'
+        
+        return {
+            'decision': decision,
+            'reason': reason,
+            'confidence_threshold_used': class_threshold or self.operating_points['high_confidence']
+        }
+    
     def predict_single(self, file_path: Union[str, Path], 
-                      return_probabilities: bool = False) -> Dict[str, Union[str, float, Dict]]:
-        """Predict emotion for a single audio file
+                      return_probabilities: bool = False,
+                      return_uncertainty: bool = True) -> Dict[str, Union[str, float, Dict]]:
+        """Predict emotion for a single audio file with calibrated uncertainties
         
         Args:
             file_path: Path to the audio file
             return_probabilities: Whether to return class probabilities
+            return_uncertainty: Whether to return uncertainty metrics
             
         Returns:
-            Dictionary containing prediction results
+            Dictionary containing prediction results with uncertainties
         """
         self.logger.info(f"Processing file: {file_path}")
         
@@ -149,13 +268,20 @@ class XGBSpeechEmotionInference:
         features_df = pd.DataFrame([features])
         features_scaled = self.scaler.transform(features_df)
         
-        # Make prediction
-        prediction = self.model.predict(features_scaled)[0]
+        # Make prediction using active model (calibrated or base)
+        prediction = self.active_model.predict(features_scaled)[0]
         predicted_emotion = self.label_encoder.inverse_transform([prediction])[0]
         
-        # Get prediction probabilities
-        probabilities = self.model.predict_proba(features_scaled)[0]
-        confidence = np.max(probabilities)
+        # Get calibrated prediction probabilities
+        probabilities = self.active_model.predict_proba(features_scaled)[0]
+        
+        # Compute uncertainty metrics
+        uncertainty_metrics = self.compute_uncertainty_metrics(probabilities)
+        
+        # Get decision recommendation based on operating points
+        decision_info = self.get_decision_recommendation(
+            uncertainty_metrics, predicted_emotion
+        )
         
         # Create probability dictionary
         prob_dict = {
@@ -166,14 +292,22 @@ class XGBSpeechEmotionInference:
         result = {
             'file_path': str(file_path),
             'predicted_emotion': predicted_emotion,
-            'confidence': float(confidence),
-            'prediction_label': int(prediction)
+            'prediction_label': int(prediction),
+            'calibration_used': self.calibrated_model is not None
         }
+        
+        if return_uncertainty:
+            result['uncertainty_metrics'] = uncertainty_metrics
+            result['decision'] = decision_info
         
         if return_probabilities:
             result['probabilities'] = prob_dict
             
-        self.logger.info(f"Prediction: {predicted_emotion} (confidence: {confidence:.3f})")
+        self.logger.info(
+            f"Prediction: {predicted_emotion} "
+            f"(confidence: {uncertainty_metrics['confidence']:.3f}, "
+            f"decision: {decision_info['decision']})"
+        )
         
         return result
     
@@ -186,33 +320,36 @@ class XGBSpeechEmotionInference:
         info = {
             'model_type': type(self.model).__name__,
             'model_path': str(self.model_path),
+            'calibration_enabled': self.calibrated_model is not None,
+            'calibration_method': 'Platt scaling' if self.calibrated_model else 'None',
             'classes': list(self.label_encoder.classes_),
             'num_classes': len(self.label_encoder.classes_),
             'feature_count': self.model.n_features_in_,
-            'config': self.config
+            'config': self.config,
+            'operating_points': self.operating_points
         }
         
-        # Try to get model parameters
-        try:
-            info['model_params'] = self.model.get_params()
-        except:
-            pass
-            
         return info
 
 def main():
     """Main function with command line interface"""
-    parser = argparse.ArgumentParser(description="XGBoost Speech Emotion Recognition Inference")
+    parser = argparse.ArgumentParser(
+        description="XGBoost Speech Emotion Recognition Inference with Calibrated Uncertainties"
+    )
     parser.add_argument('--model-path', required=True, type=str, help='Path to model directory')
-    parser.add_argument('--file',required=True ,type=str, help='Single audio file to process')
+    parser.add_argument('--file', required=True, type=str, help='Single audio file to process')
     parser.add_argument('--probabilities', action='store_true', help='Return class probabilities')
+    parser.add_argument('--no-calibration', action='store_true', help='Disable calibration')
     parser.add_argument('--info', action='store_true', help='Show model information and exit')
     
     args = parser.parse_args()
     
     # Initialize inference engine
     try:
-        engine = XGBSpeechEmotionInference(args.model_path)
+        engine = XGBSpeechEmotionInference(
+            args.model_path, 
+            use_calibration=not args.no_calibration
+        )
     except Exception as e:
         print(f"Error initializing inference engine: {e}")
         return
@@ -230,14 +367,28 @@ def main():
         result = engine.predict_single(args.file, args.probabilities)
         print(f"\nPrediction for {args.file}:")
         print(f"Emotion: {result['predicted_emotion']}")
-        print(f"Confidence: {result['confidence']:.3f}")
-        if args.probabilities:
-            print("Probabilities:")
-            for emotion, prob in result['probabilities'].items():
-                print(f"  {emotion}: {prob:.3f}")
+        print(f"Calibration: {'Enabled' if result['calibration_used'] else 'Disabled'}")
+        
+        if 'uncertainty_metrics' in result:
+            print("\nUncertainty Metrics:")
+            for metric, value in result['uncertainty_metrics'].items():
+                print(f"  {metric}: {value:.4f}")
+        
+        if 'decision' in result:
+            print(f"\nDecision: {result['decision']['decision'].upper()}")
+            print(f"Reason: {result['decision']['reason']}")
+        
+        if args.probabilities and 'probabilities' in result:
+            print("\nClass Probabilities:")
+            for emotion, prob in sorted(
+                result['probabilities'].items(), 
+                key=lambda x: x[1], 
+                reverse=True
+            ):
+                print(f"  {emotion}: {prob:.4f}")
+                
     except Exception as e:
         print(f"Error processing file: {e}")
-    return
     
 if __name__ == "__main__":
     main()

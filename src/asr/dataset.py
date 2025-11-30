@@ -28,27 +28,76 @@ def get_featurizer(sample_rate=16000, n_mels=80, hop_length=160, device='cpu'):
 
 # Custom Dataset Class
 class CustomAudioDataset(Dataset):
-    def __init__(self, json_path, log_ex=True, valid=False):
+    def __init__(self, json_path, log_ex=True, valid=False, augmentation_config=None):
         print(f"Loading json data from {json_path}")
         with open(json_path, "r", encoding="utf-8") as f:
             self.data = json.load(f)
-        # print(self.data)
+        
         self.text_process = TextTransform()
         self.log_ex = log_ex
 
+        # Default augmentation config
+        if augmentation_config is None:
+            augmentation_config = {
+                'use_spec_augment': True,
+                'use_time_mask': True,
+                'use_freq_mask': True,
+                'use_time_stretch': False,
+                'use_noise_mixing': False,
+                'time_mask_param': 15,
+                'time_mask_prob': 0.05,
+                'time_mask_count': 10,
+                'freq_mask_param': 27,
+                'time_stretch_rate': 1.0,
+                'noise_snr_db': 20.0
+            }
+        
+        self.augmentation_config = augmentation_config
+
         if valid:
+            # No augmentation for validation
             self.audio_transforms = torch.nn.Sequential(MelSpec())
         else:
-            # Time & Frequency Masking
-            time_masks = [
-                torchaudio.transforms.TimeMasking(time_mask_param=15, p=0.05)
-                for _ in range(10)
-            ]
-            self.audio_transforms = nn.Sequential(
-                MelSpec(),
-                transforms.FrequencyMasking(freq_mask_param=27),
-                *time_masks,
-            )
+            # Build augmentation pipeline based on config
+            self.audio_transforms = self._build_augmentation_pipeline()
+
+    def _build_augmentation_pipeline(self):
+        """Build augmentation pipeline based on config flags"""
+        transforms_list = [MelSpec()]
+        if self.augmentation_config.get('use_time_stretch', False):
+            stretch_rate = self.augmentation_config.get('time_stretch_rate', 1.0)
+            if stretch_rate != 1.0:
+                transforms_list.append(
+                    transforms.TimeStretch(
+                        n_freq=self.augmentation_config.get('n_mels', 80),
+                        fixed_rate=stretch_rate
+                    )
+                )
+        
+        if self.augmentation_config.get('use_spec_augment', True):
+            # Frequency Masking
+            if self.augmentation_config.get('use_freq_mask', True):
+                transforms_list.append(
+                    transforms.FrequencyMasking(
+                        freq_mask_param=self.augmentation_config.get('freq_mask_param', 27)
+                    )
+                )
+            
+            # Time Masking
+            if self.augmentation_config.get('use_time_mask', True):
+                time_mask_count = self.augmentation_config.get('time_mask_count', 10)
+                time_mask_param = self.augmentation_config.get('time_mask_param', 15)
+                time_mask_prob = self.augmentation_config.get('time_mask_prob', 0.05)
+                
+                time_masks = [
+                    torchaudio.transforms.TimeMasking(
+                        time_mask_param=time_mask_param, 
+                        p=time_mask_prob
+                    ) for _ in range(time_mask_count)
+                ]
+                transforms_list.extend(time_masks)
+        
+        return nn.Sequential(*transforms_list)
 
     def __len__(self):
         return len(self.data)
@@ -58,10 +107,21 @@ class CustomAudioDataset(Dataset):
         file_path = item["key"]
 
         try:
-            waveform, _ = torchaudio.load(file_path, backend='soundfile')             # Point to location of audio data
-            utterance = item["text"].lower()                     # Point to sentence of audio data
-            label = self.text_process.text_to_int(utterance)     # Convert characters to integer map from utils.py
-            spectrogram = self.audio_transforms(waveform)        # (channel, feature, time)
+            waveform, sample_rate = torchaudio.load(file_path, backend='soundfile')
+            
+            # Apply noise mixing if enabled (before mel spectrogram)
+            if self.augmentation_config.get('use_noise_mixing', False):
+                snr_db = self.augmentation_config.get('noise_snr_db', 20.0)
+                noise = torch.randn_like(waveform) * 0.005
+                signal_power = waveform.pow(2).mean()
+                noise_power = noise.pow(2).mean()
+                snr = 10 ** (snr_db / 10)
+                noise = noise * torch.sqrt(signal_power / (snr * noise_power))
+                waveform = waveform + noise
+            
+            utterance = item["text"].lower()
+            label = self.text_process.text_to_int(utterance)
+            spectrogram = self.audio_transforms(waveform)
             label_len = len(label)
 
             if spectrogram.shape[0] > 1:
@@ -84,15 +144,20 @@ class CustomAudioDataset(Dataset):
 
 # Lightning Data Module
 class SpeechDataModule(pl.LightningDataModule):
-    def __init__(self, batch_size, train_json, test_json, num_workers):
+    def __init__(self, batch_size, train_json, test_json, num_workers, augmentation_config=None):
         super().__init__()
         self.batch_size = batch_size
         self.train_json = train_json
         self.test_json = test_json
         self.num_workers = num_workers
+        self.augmentation_config = augmentation_config
 
     def setup(self, stage=None):
-        self.train_dataset = CustomAudioDataset(self.train_json, valid=False)
+        self.train_dataset = CustomAudioDataset(
+            self.train_json, 
+            valid=False, 
+            augmentation_config=self.augmentation_config
+        )
         self.test_dataset = CustomAudioDataset(self.test_json, valid=True)
 
     def data_processing(self, data):
